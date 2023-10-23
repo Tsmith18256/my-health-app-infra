@@ -46,7 +46,7 @@ resource "google_compute_instance" "mha_server" {
 
   boot_disk {
     initialize_params {
-      image = "cos-cloud/cos-stable"
+      image = "debian-cloud/debian-11"
     }
   }
 
@@ -56,4 +56,6 @@ resource "google_compute_instance" "mha_server" {
       # empty block configures public IP to be assigned
     }
   }
+
+  metadata_startup_script = file(var.startup_script_file)
 }
