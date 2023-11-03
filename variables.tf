@@ -4,6 +4,8 @@ variable "credentials_file" {}
 
 variable "startup_script_file" {}
 
+variable "service_account_name" {}
+
 variable "region" {
   default = "us-west1"
 }

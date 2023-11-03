@@ -11,9 +11,11 @@ terraform {
     prefix = "terraform/state"
   }
 }
-
+locals {
+  auth_file = file(var.credentials_file)
+}
 provider "google" {
-  credentials = file(var.credentials_file)
+  credentials = local.auth_file
 
   project = var.project
   region  = var.region
@@ -34,15 +36,22 @@ resource "google_compute_firewall" "mha_firewall" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "443"]
+    ports    = ["22", "80", "443"]
   }
 
-  source_tags = ["web"]
+  source_ranges = [ "0.0.0.0/0" ]
 }
 
 resource "google_compute_instance" "mha_server" {
   name         = "mha-server"
   machine_type = "e2-micro"
+
+  allow_stopping_for_update = true
+
+  service_account {
+    scopes = [ "cloud-platform" ]
+    email = var.service_account_name
+  }
 
   boot_disk {
     initialize_params {
@@ -57,5 +66,8 @@ resource "google_compute_instance" "mha_server" {
     }
   }
 
-  metadata_startup_script = file(var.startup_script_file)
+  metadata_startup_script = templatefile("${path.module}/${var.startup_script_file}", {
+    auth_file            = base64encode(local.auth_file)
+    service_account_name = var.service_account_name
+  })
 }
